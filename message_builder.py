@@ -64,7 +64,7 @@ def build_update_message() -> str:
         lines.append(_row(f"عيار {k}", f"{_fmt(v * usd_aden)} ريال", "🔸"))
     lines.append("")
     lines.append(DIVIDER)
-    lines.append("🔗 المصدر: gold-api.com | exrye.com")
+    lines.append("🔗 قناتنا: t.me/priceGoldyemen")
 
     return "\n".join(lines)
 

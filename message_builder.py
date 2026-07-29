@@ -1,6 +1,6 @@
 """بناء نصوص رسائل التحديث: رسالة صرف منفردة ورسالة ذهب منفردة"""
 from datetime import datetime
-from gold_price import get_gold_price_usd_per_ounce
+from gold_price import get_gold_price_usd_per_ounce, get_local_gold_buy_sell
 from exchange_rate import (
     get_usd_yer_sanaa,
     get_usd_yer_aden,
@@ -20,16 +20,20 @@ def _row(label: str, value: str, emoji: str = "▫️") -> str:
     return f"{emoji} {label}  ┃  *{value}*"
 
 
+def _buy_sell_row(label: str, data: dict, emoji: str = "▫️") -> str:
+    return f"{emoji} {label}  ┃  شراء: *{_fmt(data['buy'])}*  |  بيع: *{_fmt(data['sell'])}* ريال"
+
+
 def _now_strings():
     now = datetime.now()
     return now.strftime("%Y-%m-%d"), now.strftime("%H:%M")
 
 
 def build_exchange_message() -> str:
-    usd_sanaa = get_usd_yer_sanaa()["sell"]
-    usd_aden = get_usd_yer_aden()["sell"]
-    sar_sanaa = get_sar_yer_sanaa()["sell"]
-    sar_aden = get_sar_yer_aden()["sell"]
+    usd_sanaa = get_usd_yer_sanaa()
+    usd_aden = get_usd_yer_aden()
+    sar_sanaa = get_sar_yer_sanaa()
+    sar_aden = get_sar_yer_aden()
 
     now_date, now_time = _now_strings()
 
@@ -40,13 +44,13 @@ def build_exchange_message() -> str:
     lines.append(DIVIDER)
     lines.append("")
     lines.append("💵 *الدولار الأمريكي مقابل الريال اليمني*")
-    lines.append(_row("صنعاء", f"{_fmt(usd_sanaa)} ريال", "🔹"))
-    lines.append(_row("عدن", f"{_fmt(usd_aden)} ريال", "🔸"))
+    lines.append(_buy_sell_row("صنعاء", usd_sanaa, "🔹"))
+    lines.append(_buy_sell_row("عدن", usd_aden, "🔸"))
     lines.append("")
     lines.append(DIVIDER)
     lines.append("🇸🇦 *الريال السعودي مقابل الريال اليمني*")
-    lines.append(_row("صنعاء", f"{_fmt(sar_sanaa)} ريال", "🔹"))
-    lines.append(_row("عدن", f"{_fmt(sar_aden)} ريال", "🔸"))
+    lines.append(_buy_sell_row("صنعاء", sar_sanaa, "🔹"))
+    lines.append(_buy_sell_row("عدن", sar_aden, "🔸"))
     lines.append("")
     lines.append(DIVIDER)
     lines.append("🔗 قناتنا: t.me/priceGoldyemen")
@@ -92,6 +96,28 @@ def build_gold_message() -> str:
     lines.append("🇾🇪 *سعر جرام الذهب بالريال اليمني — عدن*")
     for k, v in karats_usd.items():
         lines.append(_row(f"عيار {k}", f"{_fmt(v * usd_aden)} ريال", "🔸"))
+
+    # --- قسم جديد: بيع/شراء عيار 21 والجنيه (بيانات محلية فعلية) ---
+    try:
+        local = get_local_gold_buy_sell()
+        lines.append("")
+        lines.append(DIVIDER)
+        lines.append("💎 *أسعار السوق المحلي (بيع وشراء) — عيار 21 والجنيه*")
+        lines.append("")
+        lines.append("🇾🇪 *صنعاء*")
+        if local["sanaa"]["21"]:
+            lines.append(_buy_sell_row("عيار 21", local["sanaa"]["21"], "🔹"))
+        if local["sanaa"]["pound"]:
+            lines.append(_buy_sell_row("الجنيه", local["sanaa"]["pound"], "🔹"))
+        lines.append("")
+        lines.append("🇾🇪 *عدن*")
+        if local["aden"]["21"]:
+            lines.append(_buy_sell_row("عيار 21", local["aden"]["21"], "🔸"))
+        if local["aden"]["pound"]:
+            lines.append(_buy_sell_row("الجنيه", local["aden"]["pound"], "🔸"))
+    except Exception:
+        pass  # إذا فشل جلب بيانات boqash.com، لا نكسر الرسالة كاملة
+
     lines.append("")
     lines.append(DIVIDER)
     lines.append("🔗 قناتنا: t.me/priceGoldyemen")
